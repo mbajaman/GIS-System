@@ -3,3 +3,9 @@
 //
 
 #include "BufferPool.h"
+
+BufferPool::BufferPool(int size) {
+    map.clear();
+    dq.clear();
+    cache_size = size;
+}

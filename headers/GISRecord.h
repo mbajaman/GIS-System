@@ -5,6 +5,9 @@
 #ifndef GIS_GISRECORD_H
 #define GIS_GISRECORD_H
 
+struct Record{
+
+};
 
 class GISRecord {
 
