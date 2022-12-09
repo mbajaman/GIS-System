@@ -47,9 +47,19 @@ public:
      */
     void addLineBreak();
 
+    /**
+     * Adds the closing time stamp to the log file
+     */
+    void endLogger();
+
+    void startLogger();
+
 private:
     /// Log file name
     string filename;
+    string dbFile;
+    string scriptFile;
+    string logFile;
 };
 
 

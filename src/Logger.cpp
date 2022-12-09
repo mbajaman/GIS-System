@@ -18,22 +18,10 @@ Logger::Logger(const string& dbFile, const string& script, const string& logFile
     ofstream logfile;
     filename = logFile;
     logfile.open(filename);
-    ostringstream ss;
-
-    // Create the beginning of the log file.
-    ss << "Course Project for COMP 8042\n";
-    ss << "Student Name: Mohammed Bajaman, Student ID: A00991074\n";
-    ss << "Begin of GIS Program log:\n";
-    ss << "dbFile: " << dbFile << endl;
-    ss << "script: " << script << endl;
-    ss << "log: " << logFile << endl;
-
-    // Get current time and append to starting of log file
-    auto getTime = chrono::system_clock::now();
-    time_t start_time = chrono::system_clock::to_time_t(getTime);
-    ss << "Start Time: " << ctime(&start_time);
-    logfile << ss.str();
     logfile.close();
+    this->dbFile = dbFile;
+    this->scriptFile = script;
+    this->logFile = logFile;
 }
 
 void Logger::addLine(const string& line) {
@@ -74,9 +62,47 @@ void Logger::addText(const string& text) {
     logfile.close();
 }
 
+void Logger::endLogger() {
+    stringstream ss;
+    ofstream logfile;
+    logfile.open(filename, ios::app);
+
+    // Get current time and append to starting of log file
+    auto getTime = chrono::system_clock::now();
+    time_t start_time = chrono::system_clock::to_time_t(getTime);
+    ss << "End Time: " << ctime(&start_time);
+    logfile << ss.str();
+    logfile.close();
+}
+
+
+
 Logger& Logger::operator=(const Logger &other) {
     filename = other.filename;
     return *this;
 }
+
+void Logger::startLogger() {
+    ofstream logfile;
+    logfile.open(filename);
+    ostringstream ss;
+
+    // Create the beginning of the log file.
+    ss << "Course Project for COMP 8042\n";
+    ss << "Student Name: Mohammed Bajaman, Student ID: A00991074\n";
+    ss << "Begin of GIS Program log:\n";
+    ss << "dbFile: " << dbFile << endl;
+    ss << "script: " << scriptFile << endl;
+    ss << "log: " << logFile << endl;
+
+    // Get current time and append to starting of log file
+    auto getTime = chrono::system_clock::now();
+    time_t start_time = chrono::system_clock::to_time_t(getTime);
+    ss << "Start Time: " << ctime(&start_time) << endl;
+    logfile << ss.str();
+    logfile.close();
+}
+
+
 
 

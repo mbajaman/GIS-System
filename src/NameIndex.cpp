@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <limits>
+#include <utility>
 #include "NameIndex.h"
 
 NameIndex::NameIndex() {
@@ -14,11 +15,11 @@ NameIndex::NameIndex() {
     hashTable = HashTable<vector<string>>(1024, hf, rf);
 }
 
-void NameIndex::addToIndex(vector<string> location, string offset) {
-    hashTable.insert(location, offset);
+void NameIndex::addToIndex(const vector<string>& location, string offset) {
+    hashTable.insert(location, std::move(offset));
 }
 
-vector<string> NameIndex::searchIndex(vector<string> location) {
+vector<string> NameIndex::searchIndex(const vector<string>& location) {
     int result = hashTable.search(location);
     vector<string> vector_data{};
     if(result) {
@@ -42,21 +43,31 @@ vector<string> NameIndex::searchIndex(vector<string> location) {
     }
     return vector_data;
 }
-string NameIndex::str() {
+
+string NameIndex::str() const {
     stringstream ss;
     ss << "\nFormat of display is\n"
           "Slot Number: data record\n"
           "Current table size is " << hashTable.getBucketSize() <<
        "\nNumber of elements in table is " << hashTable.getNumOccupied() << "\n\n";
+
+    // Create containers for output
+    vector<vector<string>> myHashTable = hashTable.getBuckets();
+    vector<string> myOffsets = hashTable.getOffsets();
+
     for(int i = 0; i < hashTable.getBucketSize(); i++)
     {
         // If occupied...
         if(hashTable.getBucketStatus()[i] == 1)
         {
-            ss << "\t" << to_string(i) << ": [" << hashTable.getBuckets()[i][0] << ":" << hashTable.getBuckets()[i][1]
-               << ", [" << hashTable.getOffsets()[i] << "]]" << endl;
+            ss << "\t" << to_string(i) << ": [" << myHashTable[i][0] << ":" << myHashTable[i][1]
+               << ", [" << myOffsets[i] << "]]" << endl;
         }
     }
+
+    // Cleanup temporary containers
+    myHashTable.clear();
+    myOffsets.clear();
     return ss.str();
 }
 

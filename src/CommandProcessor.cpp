@@ -7,6 +7,7 @@
 #include <sstream>
 #include <map>
 #include <Logger.h>
+#include <stdlib.h>
 #include "CommandProcessor.h"
 
 void CommandProcessor::addCommand(const vector<string>& command) {
@@ -15,7 +16,7 @@ void CommandProcessor::addCommand(const vector<string>& command) {
 
 void CommandProcessor::RunCommands(Logger &loggerInstance) {
     CommandProcessor::logger = loggerInstance;
-
+    logger.startLogger();
     // Create a map to get enum from string
     std::map<std::string, enum_command> commandMap = {
             {"world", enum_command::world},
@@ -48,6 +49,10 @@ void CommandProcessor::RunCommands(Logger &loggerInstance) {
                 commandsCount++;
                 logger.addText("Command " + to_string(commandsCount) +": ");
                 logger.addLine(i);
+                logger.addLine("Terminating execution of commands.");
+                logger.addLineBreak();
+                logger.endLogger();
+                exit(0);
                 break;
             case import:
                 commandsCount++;

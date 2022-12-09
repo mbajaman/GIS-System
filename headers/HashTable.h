@@ -7,8 +7,10 @@
 #define GIS_HASHTABLE_H
 
 
+#include <utility>
 #include <vector>
 #include <string>
+#include <valarray>
 
 using namespace std;
 
@@ -29,7 +31,7 @@ public:
 class ElfStringHash : public HashFunction<vector<string>> {
 public:
     // Computes an elfhash value for a string
-    unsigned int operator()(const vector<string>& s) const {
+    unsigned int operator()(const vector<string>& s) const override {
         unsigned int hash = 0;
         unsigned int x;
         for (const auto & i : s) {
@@ -44,7 +46,34 @@ public:
                 hash &= ~x;
             }
         }
+        hash = prime(hash);
         return hash;
+    }
+
+    /**
+     * Calculates nearest prime number
+     * Reference: https://www.geeksforgeeks.org/nearest-prime-less-given-number-n/
+     * @param n Takes an integer and finds closest prime
+     * @return Returns the closest prime number
+     */
+    static unsigned int prime(unsigned int n) {
+        if (n & 1)
+            n -= 2;
+        else
+            n--;
+
+        unsigned int i, j;
+        for (i = n; i >= 2; i -= 2) {
+            if (i % 2 == 0)
+                continue;
+            for (j = 3; j <= sqrt(i); j += 2) {
+                if (i % j == 0)
+                    break;
+            }
+            if (j > sqrt(i))
+                return i;
+        }
+        return 2;
     }
 };
 
@@ -62,7 +91,7 @@ public:
  */
 class QuadraticProbing : public ResolutionFunction {
 public:
-    unsigned int operator()(int i) const {
+    unsigned int operator()(int i) const override {
         return (i * i) + i / 2;
     }
 };
@@ -102,20 +131,27 @@ public:
             occupied = 0;
             expandAndRehash();
         }
-
+        int collision = 0;
         int tableSize = m_buckets.size();
         unsigned int h = hash->operator()(key) % tableSize;
         unsigned int firstH = h;
         while (m_statuses[h] == OCCUPIED){
-            ++numCollisions; // Record how many collisions occur
-            h = (h + hash->operator()(key)) % tableSize; // Compute next hash
-            if (h == firstH)
+            collision++; // Record how many collisions have occurred on this insert
+            h = (h + QuadraticProbing().operator()(collision)) % tableSize; // Compute next hash
+            if (h == firstH){
+                occupied = 0;
+                expandAndRehash();
                 return;
+            }
+
         }
 
+        // If collisions more than numberOfCollisions update numberOfCollisions on insert
+        if (collision >= numCollisions)
+            numCollisions = collision;
         // Populate HashTable bucket, statuses and offset information
         m_buckets[h] = key;
-        m_offsets[h] = offset;
+        m_offsets[h] = std::move(offset);
         m_statuses[h] = OCCUPIED;
 
         // Track how many buckets have been occupied
@@ -129,12 +165,16 @@ public:
      */
     int search(const K& key) {
         int tableSize = m_buckets.size();
+        int collision = 0;
         unsigned int h = hash->operator()(key) % tableSize;
         unsigned int firstH = h;
         while (m_statuses[h] != EMPTY){
             if (m_statuses[h] == OCCUPIED && m_buckets[h] == key)
+            {
                 return stoi(m_offsets[h]); // Convert offset (string) to int
-            h = (h + hash->operator()(key)) % tableSize;
+            }
+            collision++;
+            h = (h + QuadraticProbing().operator()(collision)) % tableSize;
             if (h == firstH)
                 return 0;
         }

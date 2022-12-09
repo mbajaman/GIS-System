@@ -34,7 +34,7 @@ public:
      * @param location GIS Record to add to NameIndex
      * @param offset File offset to store in the NameIndex to fetch full record when searched
      */
-    void addToIndex(vector<string> location, string offset);
+    void addToIndex(const vector<string>& location, string offset);
 
     /**
      * Searches NameIndex and retrieves full record from database file
@@ -42,16 +42,15 @@ public:
      * @return Returns full record from database
      * Reference: https://stackoverflow.com/questions/5207550/in-c-is-there-a-way-to-go-to-a-specific-line-in-a-text-file
      */
-    vector<string> searchIndex(vector<string> location);
+    vector<string> searchIndex(const vector<string>& location);
 
     /**
      * @return Returns a nicely formatted string of the NameIndex for debug purposes
      */
-    string str();
+    string str() const;
 
     HashTable<vector<string>> getHashTable() const { return hashTable; }
 
-private:
     /// HashFunction pointer
     HashFunction<vector<string>> *hf;
 
