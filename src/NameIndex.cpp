@@ -18,23 +18,6 @@ void NameIndex::addToIndex(vector<string> location, string offset) {
     hashTable.insert(location, offset);
 }
 
-string NameIndex::str() {
-    stringstream ss;
-    ss << "\nFormat of display is\n"
-          "Slot Number: data record\n"
-          "Current table size is " << hashTable.getBucketSize() <<
-          "\nNumber of elements in table is " << hashTable.getNumOccupied() << "\n\n";
-    for(int i = 0; i < hashTable.getBucketSize(); i++)
-    {
-        if(hashTable.getBucketStatus()[i] == 1)
-        {
-            ss << "\t" << to_string(i) << ": [" << hashTable.getBuckets()[i][0] << ":" << hashTable.getBuckets()[i][1]
-            << ", [" << hashTable.getOffsets()[i] << "]]" << endl;
-        }
-    }
-    return ss.str();
-}
-
 vector<string> NameIndex::searchIndex(vector<string> location) {
     int result = hashTable.search(location);
     vector<string> vector_data{};
@@ -59,5 +42,23 @@ vector<string> NameIndex::searchIndex(vector<string> location) {
     }
     return vector_data;
 }
+string NameIndex::str() {
+    stringstream ss;
+    ss << "\nFormat of display is\n"
+          "Slot Number: data record\n"
+          "Current table size is " << hashTable.getBucketSize() <<
+       "\nNumber of elements in table is " << hashTable.getNumOccupied() << "\n\n";
+    for(int i = 0; i < hashTable.getBucketSize(); i++)
+    {
+        // If occupied...
+        if(hashTable.getBucketStatus()[i] == 1)
+        {
+            ss << "\t" << to_string(i) << ": [" << hashTable.getBuckets()[i][0] << ":" << hashTable.getBuckets()[i][1]
+               << ", [" << hashTable.getOffsets()[i] << "]]" << endl;
+        }
+    }
+    return ss.str();
+}
+
 
 
