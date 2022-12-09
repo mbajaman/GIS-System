@@ -7,23 +7,16 @@
 #include <sstream>
 #include <map>
 #include <Logger.h>
-#include <NameIndex.h>
 #include "CommandProcessor.h"
 
-
-
-CommandProcessor::CommandProcessor() {
-}
-
-CommandProcessor::~CommandProcessor() {
-    CommandList.clear();
-}
-
-void CommandProcessor::addCommand(vector<string> command) {
+void CommandProcessor::addCommand(const vector<string>& command) {
     CommandList.push_back(command);
 }
 
-void CommandProcessor::RunCommands(Logger &logger) {
+void CommandProcessor::RunCommands(Logger &loggerInstance) {
+    CommandProcessor::logger = loggerInstance;
+
+    // Create a map to get enum from string
     std::map<std::string, enum_command> commandMap = {
             {"world", enum_command::world},
             {"quit", enum_command::quit},
@@ -34,67 +27,69 @@ void CommandProcessor::RunCommands(Logger &logger) {
             {"debug", enum_command::debug}
     };
 
+    // Count number of commands - this is to display command number in log file
     int commandsCount = 0;
 
-    for(int i = 0; i < CommandList.size(); i++)
+    // Iterate through CommandList and process commands
+    for(auto & i : CommandList)
     {
-        if(CommandList[i][0][0] == ';')
+        if(i[0][0] == ';')
         {
-            logger.addLine(CommandList[i]);
+            logger.addLine(i);
             continue;
         }
 
-        switch(commandMap.find(CommandList[i][0])->second){
+        switch(commandMap.find(i[0])->second){
             case world:
-                logger.addLine(CommandList[i]);
-                WorldCommand(CommandList[i]);
+                logger.addLine(i);
+                WorldCommand(i);
                 break;
             case quit:
                 commandsCount++;
                 logger.addText("Command " + to_string(commandsCount) +": ");
-                logger.addLine(CommandList[i]);
+                logger.addLine(i);
                 break;
             case import:
                 commandsCount++;
                 logger.addText("Command " + to_string(commandsCount) +": ");
-                logger.addLine(CommandList[i]);
-                ImportCommand(CommandList[i]);
+                logger.addLine(i);
+                ImportCommand(i);
                 break;
             case what_is:
                 commandsCount++;
                 logger.addText("Command " + to_string(commandsCount) +": ");
-                logger.addLine(CommandList[i]);
-                WhatIsCommand(CommandList[i]);
+                logger.addLine(i);
+                WhatIsCommand(i);
                 break;
             case what_is_at:
                 commandsCount++;
                 logger.addText("Command " + to_string(commandsCount) +": ");
-                logger.addLine(CommandList[i]);
-                cout << "Checking coordinates... " << CommandList[i][1] << " | " << CommandList[i][2] << endl;
+                logger.addLine(i);
+                WhatIsAtCommand(i);
                 break;
             case what_is_in:
                 commandsCount++;
                 logger.addText("Command " + to_string(commandsCount) +": ");
-                logger.addLine(CommandList[i]);
-                cout << "What is in... " << CommandList[i][1] << " | " << CommandList[i][2] << endl;
+                logger.addLine(i);
+                WhatIsInCommand(i);
                 break;
             case debug:
                 commandsCount++;
                 logger.addText("Command " + to_string(commandsCount) +": ");
-                logger.addLine(CommandList[i]);
-                DebugCommand(CommandList[i]);
+                logger.addLine(i);
+                DebugCommand(i);
                 break;
         }
     }
 }
 
 void CommandProcessor::WorldCommand(const vector<string>& command) {
-    cout << "Running World command..." << endl;
     string longitude1 = command[1].substr(0, command[1].size() - 1);
     string longitude2 = command[2].substr(0, command[2].size() - 1);
     string latitude1 = command[3].substr(0, command[3].size() - 1);
     string latitude2 = command[4].substr(0, command[4].size() - 1);
 
+    // Set world boundaries
     if(command[1][command[1].size() - 1] == 'W')
         dms.f_longitude1 = -DMStoDDConverter(longitude1);
 
@@ -118,7 +113,7 @@ float CommandProcessor::DMStoDDConverter(const string& DMS) {
 }
 
 void CommandProcessor::ImportCommand(const vector<string>& command) {
-    cout << "Importing dataset... " << command[1] << endl;
+    logger.addLine("\n*** Importing dataset ***");
 
     ofstream database;
     database.open("database.txt");
@@ -127,6 +122,7 @@ void CommandProcessor::ImportCommand(const vector<string>& command) {
 
     vector<vector<string>> vector_collection;
 
+    // Record of successful imports into database.txt
     int count_imported = 0;
 
     ifstream RecordsFile(command[1]);
@@ -158,7 +154,6 @@ void CommandProcessor::ImportCommand(const vector<string>& command) {
                     }
                     string GISRecord = ss.str();
                     database << GISRecord;
-                    count_imported++;
                 }
 
                 // Add to NameIndex
@@ -166,9 +161,10 @@ void CommandProcessor::ImportCommand(const vector<string>& command) {
                 string stateAbv = vector_collection[i][3];
                 niEntry.push_back(featureName);
                 niEntry.push_back(stateAbv);
-                //niEntry.push_back(to_string(i-1));
                 ni.addToIndex(niEntry, to_string(i-1));
 
+                // Count imports
+                count_imported++;
             }
             database << '\n';
         }
@@ -179,7 +175,7 @@ void CommandProcessor::ImportCommand(const vector<string>& command) {
     stringstream ss;
     ss << endl;
     ss << "Imported Features by name: " << count_imported << endl;
-    ss << "Longest probe sequence: " << ni.hashTable.numCollisions << endl;
+    ss << "Longest probe sequence: " << ni.getHashTable().getNumCollisions() << endl;
     ss << "Imported Location: Not implemented" << endl;
     ss << "Average name length: Not implemented" << endl;
     logger.addLine(ss.str());
@@ -194,7 +190,7 @@ void CommandProcessor::WhatIsCommand(const vector<string> &command) {
     location.push_back(command[2]);
 
     vector<string> searchResult;
-    searchResult = ni.searchIndex(location);
+    searchResult = ni.searchIndex(location); // Store searchResult
 
     if(!searchResult.empty())
     {
@@ -205,13 +201,26 @@ void CommandProcessor::WhatIsCommand(const vector<string> &command) {
 
         logger.addLine(ss.str());
         logger.addLineBreak();
+
+        // Insert into buffer pool
+        bufferPool.insert(searchResult[searchResult.size()-1], searchResult);
     }
     else
     {
-        ss << "\n\tNo records match\"" << command[1] << "\" and \"" << command[2] << "\"";
+        ss << "\n\tNo records match \"" << command[1] << "\" and \"" << command[2] << "\"";
         logger.addLine(ss.str());
         logger.addLineBreak();
     }
+}
+
+void CommandProcessor::WhatIsAtCommand(const vector<string> &command) {
+    logger.addLine("\n\t*** what_is_at command not implemented. ***");
+    logger.addLineBreak();
+}
+
+void CommandProcessor::WhatIsInCommand(const vector<string> &command) {
+    logger.addLine("\n\t*** what_is_in command not implemented. ***");
+    logger.addLineBreak();
 }
 
 void CommandProcessor::DebugCommand(const vector<string> &command) {
@@ -221,7 +230,19 @@ void CommandProcessor::DebugCommand(const vector<string> &command) {
         logger.addLine(ni.str());
         logger.addLineBreak();
     }
+    else if(command[1] == "pool")
+    {
+        logger.addLine(bufferPool.str());
+        logger.addLineBreak();
+    }
+    else if(command[1] == "quad")
+    {
+        logger.addLine("\n\tQuadtree not implemented");
+        logger.addLineBreak();
+    }
 }
+
+
 
 
 

@@ -7,20 +7,43 @@
 
 #include <deque>
 #include <map>
-#include "../headers/GISRecord.h"
+#include <string>
+#include <vector>
 
 using namespace std;
 
+/**
+ * LRU Cache using two data structures
+ * Reference: https://leetcode.com/problems/lru-cache/solutions/355310/lru-cache-simple-c-code-with-clear-comments/
+ */
 class BufferPool {
 public:
+    /**
+     * Constructor that sets cache size and clear the map and queue
+     */
+    BufferPool();
 
-    BufferPool(int size);
+    /**
+     * Takes an offset and record entry and stores it in the Buffer pool
+     * @param offset File offset in the database file
+     * @param record Full GIS record
+     */
+    void insert(string offset, vector<string> record);
 
-    GISRecord get(int key);
+    /**
+     * @return Returns a nicely formatted string with contents of the buffer pool
+     */
+    string str();
 
+private:
+    /// Buffer pool cache size
     int cache_size;
-    map<int,GISRecord> map;
-    deque<int> dq;
+
+    /// Map for storing offset and GIS record
+    map<string,string> map;
+
+    /// Stores offsets in a queue to keep correct MRU and LRU order
+    deque<string> dq;
 };
 
 

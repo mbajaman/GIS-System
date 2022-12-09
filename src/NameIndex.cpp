@@ -9,7 +9,7 @@
 #include "NameIndex.h"
 
 NameIndex::NameIndex() {
-    hf = new SimpleStringHash();
+    hf = new ElfStringHash();
     rf = new QuadraticProbing();
     hashTable = HashTable<vector<string>>(1024, hf, rf);
 }
@@ -22,14 +22,14 @@ string NameIndex::str() {
     stringstream ss;
     ss << "\nFormat of display is\n"
           "Slot Number: data record\n"
-          "Current table size is " << hashTable.m_buckets.size() <<
-          "\nNumber of elements in table is XXXX\n\n";
-    for(int i = 0; i < hashTable.m_buckets.size(); i++)
+          "Current table size is " << hashTable.getBucketSize() <<
+          "\nNumber of elements in table is " << hashTable.getNumOccupied() << "\n\n";
+    for(int i = 0; i < hashTable.getBucketSize(); i++)
     {
-        if(hashTable.m_statuses[i] == 1)
+        if(hashTable.getBucketStatus()[i] == 1)
         {
-            ss << "\t" << to_string(i) << ": [" << hashTable.m_buckets[i][0] << ":" << hashTable.m_buckets[i][1]
-            << ", [" << hashTable.m_offsets[i] << "]]" << endl;
+            ss << "\t" << to_string(i) << ": [" << hashTable.getBuckets()[i][0] << ":" << hashTable.getBuckets()[i][1]
+            << ", [" << hashTable.getOffsets()[i] << "]]" << endl;
         }
     }
     return ss.str();
@@ -44,7 +44,7 @@ vector<string> NameIndex::searchIndex(vector<string> location) {
         database.open("database.txt");
         database.seekg(std::ios::beg);
 
-        // https://stackoverflow.com/questions/5207550/in-c-is-there-a-way-to-go-to-a-specific-line-in-a-text-file
+        // Iterate through file till you get to the line with the full GIS record
         for (int i = 0; i < result - 1; i++) {
             database.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }

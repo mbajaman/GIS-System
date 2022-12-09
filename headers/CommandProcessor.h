@@ -9,6 +9,7 @@
 #include <string>
 #include <Logger.h>
 #include <NameIndex.h>
+#include <BufferPool.h>
 
 using namespace std;
 
@@ -32,31 +33,69 @@ struct DMS{
 class CommandProcessor {
 public:
 
-    // Constructor and Destructor
-    CommandProcessor();
-    ~CommandProcessor();
-
     // Add command to CommandProcessor vector
-    void addCommand(vector<string> command);
+    /**
+     * Adds a command to a Command list to later process in RunCommands
+     * @param commandCommand to add to command list
+     */
+    void addCommand(const vector<string>& command);
 
     // Processes the world command, converts DMS to DD format and stores world coordinates in application
+    /**
+     * Processes the world command from the script file and sets world boundaries
+     * @param command The world command to process
+     */
     void WorldCommand(const vector<string>& command);
 
+    /**
+     * Processes an import command. Populates database with valid records based on import file
+     * @param command The import command to process
+     */
     void ImportCommand(const vector<string>& command);
 
+    /**
+     * Processes a what_is command and searches the NameIndex
+     * @param command The what_is command to process
+     */
     void WhatIsCommand(const vector<string>& command);
 
+    /**
+     * Not Implemented
+     * @param command The what_is_at command to process
+     */
+    void WhatIsAtCommand(const vector<string>& command);
+
+    /**
+     * Not Implemented
+     * @param command The what_is_at command to process
+     */
+    void WhatIsInCommand(const vector<string>& command);
+
+    /**
+     * Processs the debug based on command argument (pool, hash, quad)
+     * @param command The debug command to process
+     */
     void DebugCommand(const vector<string>& command);
 
-    float DMStoDDConverter(const string& DMS);
+    /**
+     * Converts DMS to Degree Decimals
+     * @param DMS Container for Degrees, Minutes and Seconds data which are to be converted
+     * @return Converted degree decimal value
+     */
+    static float DMStoDDConverter(const string& DMS);
 
-    // List all commands in commandList
+    /**
+     * Executes all commands from script file.
+     * @param logger Pass logger instance from GIS/main file
+     */
     void RunCommands(Logger &logger);
 
+private:
     vector<vector<string>> CommandList;
     DMS dms{};
     NameIndex ni;
     Logger logger;
+    BufferPool bufferPool;
 };
 
 

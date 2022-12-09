@@ -14,18 +14,42 @@ class Logger {
 public:
     Logger();
 
-    Logger(string dbFile, string script, string logFile);
+    /**
+     * Logger constructor - helps with creating the beginning of the log file
+     * @param dbFile name of database file
+     * @param script name of script file
+     * @param logFile name of log file
+     */
+    Logger(const string& dbFile, const string& script, const string& logFile);
 
-    void addLine(string line);
+    Logger& operator=(const Logger& other);
 
-    void addText(string text);
+    /**
+     * Adds a string and inserts a newline after
+     * @param line string that gets appended to the log file
+     */
+    void addLine(const string& line);
 
+    /**
+     * Adds a string with no newline
+     * @param text string that gets appended to the log file
+     */
+    void addText(const string& text);
+
+    /**
+     * Adds a string and inserts a newline after
+     * @param line takes a vector<string> and prints it with proper spacing to the log file
+     */
     void addLine(vector<string> line);
 
+    /**
+     * Adds a line break to the logfile
+     */
     void addLineBreak();
 
-    ofstream logfile;
-    string logs;
+private:
+    /// Log file name
+    string filename;
 };
 
 
