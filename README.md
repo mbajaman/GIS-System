@@ -1,2 +1,2 @@
 # GIS-System
-Geographic Information System in C++
+Geographic Information System made in C++. Utilizes HashTable and a BufferPool to handle a large dataset of geo information.
